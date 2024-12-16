@@ -1,0 +1,528 @@
+import pygame, sys, random
+from pygame.locals import *
+import pygame_menu
+from pygame_menu.widgets import Image
+pygame.init()
+pygame.mixer.init()  
+pygame.mixer.music.load('supershy-beat.mp3') 
+pygame.mixer.music.set_volume(1)  
+WINDOWWIDTH =550
+WINDOWHEIGHT = 700
+MENUWIDTH=225
+MENUHEIGHT=350
+X_MARGIN = 145
+LANEWIDTH = 66
+CARWIDTH = 50
+CARHEIGHT = 88
+CARSPEED = 4
+DISTANCE = 200
+OBSTACLESSPEED = 2
+OBSTACLESSPEED2 = 3
+CHANGESPEED = 0.001
+BGSPEED = 1.5
+BGIMG = pygame.image.load('bg_1.jpg')
+CARIMG1 = pygame.image.load('car 1.png')
+CARIMG2 = pygame.image.load('car 2.png')
+CARIMG3 = pygame.image.load('car 3.png')
+CARIMG4 = pygame.image.load('car 4.png')
+CARIMG6 = pygame.image.load('car 6.png')
+CARIMG5 = pygame.image.load('car 5.png')
+
+
+FPS = 60
+fpsClock = pygame.time.Clock()
+DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
+pygame.display.set_caption('RACING')
+
+
+class Background():
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.speed = BGSPEED
+        self.img = BGIMG
+        self.width = self.img.get_width()
+        self.height = self.img.get_height()
+    def draw(self):
+        DISPLAYSURF.blit(self.img, (int(self.x), int(self.y)))
+        DISPLAYSURF.blit(self.img, (int(self.x), int(self.y-self.height)))
+    def update(self):
+        self.y += self.speed
+        if self.y > self.height:
+            self.y -= self.height
+
+class Score():
+    def __init__(self):
+        self.score = 0
+    def draw(self):
+        font = pygame.font.Font('font.ttf', 15)
+        scoreSuface = font.render('Score: '+str(int(self.score)), True, (0, 0, 0))
+        DISPLAYSURF.blit(scoreSuface, (10, 10))
+    def update(self):
+        self.score += 0.02
+    def add_score(self, value):
+        self.score += value
+    def reset(self):
+        self.score = 0
+
+class Obstacles1():
+    def __init__(self):
+        self.width = CARWIDTH
+        self.height = CARHEIGHT
+        self.distance = DISTANCE
+        self.speed = OBSTACLESSPEED
+        self.changeSpeed = CHANGESPEED
+        self.ls = []
+        self.car_images1 = [
+            pygame.image.load('cản 1.png'), 
+            pygame.image.load('cản 2.png'), 
+            pygame.image.load('cản 3.png'), 
+        ]
+        self.point=[pygame.image.load('point 1.png'),
+                    pygame.image.load('point 2.png'),
+                    pygame.image.load('point 3.png')]
+        for i in range(5):
+            y = -CARHEIGHT - i * self.distance
+            lane = random.randint(0, 3)
+            car_img = random.choice(self.car_images1)
+            self.ls.append([lane, y, car_img, False])  # False: không phải chướng ngại vật ăn điểm
+    
+    def draw(self):
+        # Vẽ tất cả các chướng ngại vật lên màn hình
+        for obstacle in self.ls:
+            x = int(X_MARGIN + obstacle[0] * LANEWIDTH + (LANEWIDTH - self.width) / 2)
+            y = int(obstacle[1])
+            DISPLAYSURF.blit(obstacle[2], (x, y))  # obstacle[2] là hình ảnh
+    
+    def update(self):
+    # Di chuyển vật cản
+        for obstacle in self.ls:
+            obstacle[1] += self.speed
+
+        self.ls = [obstacle for obstacle in self.ls if obstacle[1] < 600 + self.height]
+
+    # Thêm vật cản mới
+        while len(self.ls) < 5:
+            y = -CARHEIGHT - self.distance
+            lane = random.randint(0, 3)  # Khởi tạo giá trị mặc định cho `lane`
+
+        # Chọn loại vật cản
+            if random.random() < 0.3:  # 30% là chướng ngại vật ăn điểm
+                car_img = random.choice(self.point)
+                is_score = True
+            else:
+                car_img = random.choice(self.car_images1)
+                is_score = False
+        # Kiểm tra xem vật cản có trùng không
+            overlap = any(obstacle[0] == lane and abs(obstacle[1] - y) < self.height
+            for obstacle in self.ls)
+
+
+            if not overlap:
+                self.ls.append([lane, y, car_img, is_score])
+
+
+class Obstacles2():
+    def __init__(self):
+        self.width = CARWIDTH
+        self.height = CARHEIGHT
+        self.distance = DISTANCE
+        self.speed = OBSTACLESSPEED2
+        self.changeSpeed = CHANGESPEED
+        self.ls = []
+        self.car_images2 = [
+            pygame.image.load('cản 1.png'), 
+            pygame.image.load('cản 2.png'), 
+            pygame.image.load('cản 3.png'), 
+            pygame.image.load('cản 3.png'), 
+            pygame.image.load('cản 4.png'), 
+            pygame.image.load('cản 5.png'), 
+            pygame.image.load('cản 6.png'), 
+            pygame.image.load('cản 7.png'), 
+            pygame.image.load('cản 8.png'), 
+            pygame.image.load('cản 9.png'), 
+            pygame.image.load('cản 11.png'), 
+            pygame.image.load('cản 12.png'), 
+        ]
+        self.point=[pygame.image.load('point 1.png'),
+                    pygame.image.load('point 2.png'),
+                    pygame.image.load('point 3.png')]
+
+        for i in range(5):
+            y = -CARHEIGHT - i * self.distance
+            lane = random.randint(0, 3)
+            car_img = random.choice(self.car_images2)
+            self.ls.append([lane, y, car_img, False])  # False: không phải chướng ngại vật ăn điểm
+    
+    def draw(self):
+        # Vẽ tất cả các chướng ngại vật lên màn hình
+        for obstacle in self.ls:
+            x = int(X_MARGIN + obstacle[0] * LANEWIDTH + (LANEWIDTH - self.width) / 2)
+            y = int(obstacle[1])
+            DISPLAYSURF.blit(obstacle[2], (x, y))  # obstacle[2] là hình ảnh
+
+    def update(self):
+    # Di chuyển vật cản
+        for obstacle in self.ls:
+            obstacle[1] += self.speed
+
+        self.ls = [obstacle for obstacle in self.ls if obstacle[1] < 600 + self.height]
+
+    # Thêm vật cản mới
+        while len(self.ls) < 5:
+            y = -CARHEIGHT - self.distance
+            lane = random.randint(0, 3)  # Khởi tạo giá trị mặc định cho `lane`
+
+        # Chọn loại vật cản
+            if random.random() < 0.1:  # 10% là chướng ngại vật ăn điểm
+                car_img = random.choice(self.point)
+                is_score = True
+            else:
+                car_img = random.choice(self.car_images2)
+                is_score = False
+        # Kiểm tra xem vật cản có trùng không
+            overlap = any(obstacle[0] == lane and abs(obstacle[1] - y) < self.height
+            for obstacle in self.ls)
+
+
+            if not overlap:
+                self.ls.append([lane, y, car_img, is_score])
+
+
+
+def check_collision(player_car, obstacles, score):
+    point_sound= pygame.mixer.Sound('point_sound.mp3')
+    point_sound.set_volume(1)  
+    collision = False
+    new_ls = []  # Danh sách mới để lưu các chướng ngại vật chưa bị loại bỏ
+    for obstacle in obstacles.ls:
+        player_rect = pygame.Rect(player_car.x, player_car.y, player_car.width, player_car.height)
+        obstacle_rect = pygame.Rect(
+            int(X_MARGIN + obstacle[0] * LANEWIDTH + (LANEWIDTH - obstacles.width) / 2),
+            int(obstacle[1]),
+            obstacles.width,
+            obstacles.height
+        )
+        if player_rect.colliderect(obstacle_rect):
+            if obstacle[3]:  # Chướng ngại vật ăn điểm
+                point_sound.play()
+                score.add_score(100)  # Cộng điểm nếu va chạm chướng ngại vật ăn điểm
+            else:
+                collision = True  # Chạm chướng ngại vật thông thường
+        else:
+            new_ls.append(obstacle)  # Giữ lại các chướng ngại vật chưa va chạm
+    
+    obstacles.ls = new_ls  # Cập nhật danh sách chướng ngại vật
+    return collision # Trả về trạng thái va chạm
+
+
+def gameStart(bg):
+    heading_image = pygame.image.load('tostart.png') 
+    heading_img_rect = heading_image.get_rect(center=(WINDOWWIDTH // 2, WINDOWHEIGHT // 2))
+    
+    title_img = pygame.image.load('title.png')
+    title_rect = title_img.get_rect(center=(WINDOWWIDTH // 2, WINDOWHEIGHT // 4))  
+
+    startbg_img = pygame.image.load('startbg.png')
+    startbg_img = pygame.transform.scale(startbg_img, (550, 180))  
+    start_img_rect = startbg_img.get_rect(center=(WINDOWWIDTH // 2, WINDOWHEIGHT // 3)) 
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYUP:
+                if event.key == K_SPACE:
+                    return
+                
+        bg.draw()  
+        DISPLAYSURF.blit(heading_image, heading_img_rect) 
+        DISPLAYSURF.blit(title_img, title_rect)  
+        DISPLAYSURF.blit(startbg_img, start_img_rect)  
+        pygame.display.update()
+        fpsClock.tick(FPS)
+
+def gamePlay(bg, car, obstacles, score):
+  
+    moveLeft = moveRight= moveUp= moveDown=False
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_LEFT:
+                    moveLeft = True
+                if event.key == K_RIGHT:
+                    moveRight = True
+                if event.key == K_UP:
+                    moveUp = True
+                if event.key == K_DOWN:
+                    moveDown = True
+            if event.type == KEYUP:
+                if event.key == K_LEFT:
+                    moveLeft = False
+                if event.key == K_RIGHT:
+                    moveRight = False
+                if event.key == K_UP:
+                    moveUp = False
+                if event.key == K_DOWN:
+                    moveDown = False
+                
+        if check_collision(car, obstacles, score):
+            return 
+        bg.draw()
+        bg.update()
+        car.draw()
+        car.update(moveLeft, moveRight, moveUp, moveDown)
+        obstacles.draw()
+        obstacles.update()
+        score.draw()
+        score.update()
+        pygame.display.update()
+        fpsClock.tick(FPS)
+
+
+
+class Car():
+    def __init__(self, image):
+        self.width = CARWIDTH 
+        self.height = CARHEIGHT 
+        self.x = (WINDOWWIDTH-self.width)/2
+        self.y = (WINDOWHEIGHT-self.height)/2
+        self.speed = CARSPEED
+        self.original_image = image
+    def draw(self):
+        car_img = pygame.transform.scale(self.original_image, (self.width, self.height))
+        DISPLAYSURF.blit(car_img, (int(self.x), int(self.y)))
+    def update(self, moveLeft, moveRight, moveUp, moveDown):
+        if moveLeft == True:
+            self.x -= self.speed
+        if moveRight == True:
+            self.x += self.speed
+        if moveUp == True:
+            self.y -= self.speed
+        if moveDown == True:
+            self.y += self.speed
+        
+        if self.x < X_MARGIN:
+            self.x = X_MARGIN
+        if self.x + self.width > WINDOWWIDTH - X_MARGIN:
+            self.x = WINDOWWIDTH - X_MARGIN - self.width
+        if self.y < 0:
+            self.y = 0
+        if self.y + self.height > WINDOWHEIGHT :
+            self.y = WINDOWHEIGHT - self.height
+
+class Car1(Car):
+    def __init__(self):
+        super().__init__(CARIMG1)
+class Car2(Car):
+    def __init__(self):
+        super().__init__(CARIMG2)
+class Car3(Car):
+    def __init__(self):
+        super().__init__(CARIMG3)
+class Car4(Car):
+    def __init__(self):
+        super().__init__(CARIMG4)  
+class Car5(Car):
+    def __init__(self):
+        super().__init__(CARIMG5)                
+class Car6(Car):
+    def __init__(self):
+        super().__init__(CARIMG6)
+
+
+
+def gameOver(bg, car, obstacles, score):
+    crash_sound = pygame.mixer.Sound('crash.mp3')
+    crash_sound.stop()  
+    crash_sound.play()
+    pygame.mixer.music.stop()  
+
+    crash_sound_length = crash_sound.get_length()
+    start_time = pygame.time.get_ticks() 
+
+    game_over_image = pygame.image.load('gameover.png')  
+    game_over_rect = game_over_image.get_rect(center=(WINDOWWIDTH // 2, WINDOWHEIGHT // 2))
+    title_img = pygame.image.load('title.png')
+    title_rect = title_img.get_rect(center=(WINDOWWIDTH // 2, WINDOWHEIGHT // 4))  
+
+    startbg_img = pygame.image.load('startbg.png')
+    startbg_img = pygame.transform.scale(startbg_img, (550, 180))  
+    start_img_rect = startbg_img.get_rect(center=(WINDOWWIDTH // 2, WINDOWHEIGHT - (WINDOWHEIGHT // 3)))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYUP:
+                if event.key == K_SPACE:
+                    car.__init__(),
+                    obstacles.__init__()
+                    score.__init__()
+                    countdown()
+                    pygame.mixer.music.play(-1)
+                    return
+                if event.key ==K_m:
+                    main_menu()
+            
+        bg.draw()
+        car.draw()
+        obstacles.draw()
+        score.draw()
+
+        elapsed_time = (pygame.time.get_ticks() - start_time) / 1000.0  
+        if elapsed_time >= crash_sound_length: 
+            DISPLAYSURF.blit(game_over_image, game_over_rect)  
+            DISPLAYSURF.blit(title_img, title_rect)  
+            DISPLAYSURF.blit(startbg_img, start_img_rect)  
+
+        pygame.display.update()
+        fpsClock.tick(FPS)
+
+
+def countdown():
+    countdown_images = [pygame.image.load(f'count_{i}.png') for i in range(3, -1, -1)]
+    countdown_sound = pygame.mixer.Sound('sound_1.mp3')
+    start_sound = pygame.mixer.Sound('sound_2.mp3')
+    pygame.mixer.music.pause()
+    for i in range(3):
+        DISPLAYSURF.blit(BGIMG, (0, 0)) 
+        image = countdown_images[i]  
+        image_rect = image.get_rect(center=(WINDOWWIDTH // 2, WINDOWHEIGHT // 2))
+        DISPLAYSURF.blit(image, image_rect)
+        countdown_sound.stop()  
+        countdown_sound.play()  
+        pygame.display.update()
+        pygame.time.delay(1000) 
+    
+    countdown_sound.stop()
+
+    start_sound.play()
+    DISPLAYSURF.blit(BGIMG, (0, 0))  
+    image = countdown_images[3]  
+    image_rect = image.get_rect(center=(WINDOWWIDTH // 2, WINDOWHEIGHT // 2))
+    DISPLAYSURF.blit(image, image_rect)
+
+    pygame.display.update()  
+    pygame.time.delay(1500)  
+
+    start_sound.stop()  
+    pygame.mixer.music.unpause()
+
+selected_car = None
+selected_level = None
+FONT_PATH = 'font.ttf'  
+BACKGROUND_IMAGE= "nen.png"
+custom_font = pygame.font.Font(FONT_PATH, 30)
+
+custom_theme = pygame_menu.themes.Theme(
+    background_color=pygame_menu.baseimage.BaseImage(image_path=BACKGROUND_IMAGE),  
+    widget_font_color=(255,105,180),
+    selection_color=(255, 255, 0),
+    title_font_size=20,
+    widget_font_size=60,
+    widget_font='font.ttf'
+)
+custom_menu = pygame_menu.themes.Theme(
+    background_color=(255,240,245),  
+    widget_font_color=(255,105,180),
+    selection_color=(147,112,219),
+    title_font_size=20,
+    widget_font_size=50,
+    widget_font='font.ttf'
+)
+def main_menu():
+    pygame.mixer.music.play(-1)
+    menu = pygame_menu.Menu('Main', WINDOWWIDTH, WINDOWHEIGHT, theme=custom_theme)
+    menu.add.button('START', choose_level_menu)
+    menu.add.button('EXIT', pygame_menu.events.EXIT)
+    menu.mainloop(DISPLAYSURF)
+
+def choose_level_menu():
+    global selected_level
+
+    menu = pygame_menu.Menu('Choose Level', WINDOWWIDTH, WINDOWHEIGHT, theme=custom_menu)
+    menu.add.button('Level 1', start_game, 1)
+    menu.add.button('Level 2', start_game, 2)
+    menu.add.button('Back', main_menu)
+
+    menu.mainloop(DISPLAYSURF)
+
+def select_car(car):
+    global selected_car #Khai báo biến selected_car là biến toàn cục
+    selected_car = f"Car{car}" if 1 <= car <= 6 else None
+    #Nếu car trong khoảng từ 1 đến 5, selected_car sẽ có giá trị "CarX" (X là số thứ tự của chiếc xe).
+    #Nếu không, selected_car có giá trị là None
+
+def start_game(level):
+    global selected_car, selected_level
+    selected_level = level
+    choose_car_menu() 
+
+
+def choose_car_menu():
+    global selected_car
+    menu = pygame_menu.Menu('Choose your car', WINDOWWIDTH, WINDOWHEIGHT, theme=custom_menu) #tạo menu chọn xe
+
+    #Danh sách các hình ảnh xe, tên xe và đối số
+    cars = [
+        ('car 1.png', 'Car 1', 1),
+        ('car 2.png', 'Car 2', 2),
+        ('car 3.png', 'Car 3', 3),
+        ('car 4.png', 'Car 4', 4),
+        ('car 5.png', 'Car 5', 5),
+        ('car 6.png', 'Car 6', 6)
+    ]
+    #Thêm nút vào menu
+    for car_image, car_label, car_number in cars:
+        menu.add.button(car_label, select_car, car_number)
+        menu.add.generic_widget(pygame_menu.widgets.Image(image_path=car_image, angle=90, scale=(1, 1)))
+
+    menu.add.button('Start', start_game_logic)
+    menu.add.button('Back', choose_level_menu)
+    menu.mainloop(DISPLAYSURF)
+
+
+
+def start_game_logic():
+    global selected_car, selected_level
+    if selected_car is not None and selected_level is not None:
+        
+        car_classes = {
+            "Car1": Car1,
+            "Car2": Car2,
+            "Car3": Car3,
+            "Car4": Car4,
+            "Car5": Car5,
+            "Car6": Car6
+        }
+
+        obstacle_classes = {
+            1: Obstacles1,
+            2: Obstacles2
+        }
+
+        if selected_car in car_classes and selected_level in obstacle_classes:
+            car_class = car_classes[selected_car]
+            obstacle_class = obstacle_classes[selected_level]
+            bg = Background()
+            car = car_class()
+            obstacles = obstacle_class()
+            score = Score()
+            gameStart(bg)
+            countdown()
+            while True:
+                gamePlay(bg, car, obstacles, score)
+                gameOver(bg, car, obstacles, score)
+
+     
+def main():
+    while True:
+        main_menu()
+
+if __name__ == '__main__':
+    main()
